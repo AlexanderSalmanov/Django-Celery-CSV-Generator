@@ -1,0 +1,5 @@
+planekscsv/env/*
+planekscsv/requirements.txt
+planekscsv/Procfile
+planekscsv/staticfiles/*
+planekscsv/pyvenv.cfg

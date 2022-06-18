@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="d-flex justify-content-between pt-2">
+  <h1>Data Schemas by {{request.user.username}}.</h1>
+  <a href="{% url 'csvmaker:new' %}" class='btn btn-success'>New Schema</a>
+</div>
+
+  <hr>
+  <ol>
+
+    <table class='table'>
+      <thead>
+        <th>#</th>
+        <th>Title</th>
+        <th>Modified</th>
+        <th>Actions</th>
+      </thead>
+    {% for schema in schemas %}
+      <tr class='schema-item{{schema.id}}'>
+        <td>{{schema.id}}</td>
+        <td>
+          <a href="{% url 'csvmaker:single' id=schema.id %}">{{schema.title}}</a>
+        </td>
+        <td>
+          {% if not schema.updated %}
+            {{schema.timestamp}}
+          {% else %}
+            {{schema.updated}}
+          {% endif %}
+        </td>
+        <td>Edit | <button type="button" class='delete-btn{{schema.id}} btn btn-link' style='color: red; :hover: red' name="button" onclick='this.blur();'>
+                    Delete
+                  </button>
+        </td>
+      </tr>
+
+      <script type="text/javascript">
+        $(document).ready(function(){
+
+          var deleteBtn = $('.delete-btn{{schema.id}}');
+          deleteBtn.click(function(e){
+            e.preventDefault();
+            $.ajax({
+              url: "{% url 'csvmaker:delete' id=schema.id %}",
+              type: "POST",
+              data: {
+                'id': '{{schema.id}}',
+                'csrfmiddlewaretoken': '{{csrf_token}}'
+              },
+              success: function(json){
+                var schemaItem = $('.schema-item{{schema.id}}');
+                schemaItem.remove();
+              },
+              error: function(err) {}
+            })
+          })
+        })
+      </script>
+
+    {% empty %}
+      <h3>No schemas yet. Create one!</h3>
+    {% endfor %}
+    </table>
+  </ol>
+
+
+{% endblock %}

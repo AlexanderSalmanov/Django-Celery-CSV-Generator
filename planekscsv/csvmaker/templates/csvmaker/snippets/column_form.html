@@ -1,0 +1,25 @@
+{% load bootstrap4 %}
+<form class='column-form' action="{% url 'csvmaker:new' %}" method="post">
+  {% csrf_token %}
+  {% bootstrap_form form %}
+  <button type="submit" class='btn btn-primary mt-2' name="button">Add column</button>
+</form>
+<script type="text/javascript">
+  $(document).ready(function(){
+    var colForm = $('.column-form');
+    colForm.submit(function(e){
+      e.preventDefault();
+      $.ajax({
+        url: "{% url 'csvmaker:new_col' %}",
+        type: 'POST',
+        data: $(this).serialize(),
+        success: function(json){
+
+        },
+        error: function(err){
+
+        }
+      })
+    })
+  })
+</script>

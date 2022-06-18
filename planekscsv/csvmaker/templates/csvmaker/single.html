@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+  <div class="d-flex justify-content-between">
+    <p class='h2 mt-2'>Datasets from <i>{{schema.title}}</i></p>
+
+    <div class="form-group">
+      <form action="{% url 'csvmaker:generate' id=schema.id %}" method="post" >
+        {% csrf_token %}
+        <label for="num_rows" class='form-label'>Rows:</label>
+        <input class='form-control' type="number" min='0' required name="num_rows" value="">
+        <button type="submit" class='btn btn-success mt-2' name="button">Generate Data</button>
+
+      </form>
+    </div>
+
+  </div>
+
+  <table class='table'>
+    <thead>
+      <th>#</th>
+      <th>Created</th>
+      <th>Status</th>
+      <th>Actions</th>
+    </thead>
+  {% for dataset in datasets %}
+    <tr data-index='{{dataset.id}}'>
+      <td>{{dataset.id}}</td>
+      <td>
+          {{dataset.timestamp}}
+      </td>
+      <td>{{dataset.status}}
+        {% if dataset.status != 'ready' %}
+          <div class='progress-wrapper'>
+            <div id='progress-bar' class='progress-bar' style="background-color: #68a9ef; width: 0%;">&nbsp;</div>
+          </div>
+          <div id="progress-bar-message">Waiting for progress to start...</div>
+          <div id="celery-result"></div>
+        {% endif %}
+      </td>
+      <td>
+        {% if dataset.status == 'ready' %}
+          <a href="{% url 'csvmaker:download' id=dataset.id %}">Download</a>
+        {% endif %}
+      </td>
+    </tr>
+
+    {% if dataset.status == 'processing' %}
+    <script type="text/javascript">
+        document.addEventListener("DOMContentLoaded", function () {
+        var progressUrl = "{% url 'celery_progress:task_status' dataset.task_id %}";
+        CeleryProgressBar.initProgressBar(progressUrl);
+      });
+    </script>
+    {% endif %}
+  {% empty %}
+    <h3>No datasets yet. Generate one!</h3>
+  {% endfor %}
+  </table>
+
+
+<script src="{% static 'celery_progress/celery_progress.js' %}"></script>
+
+
+{% endblock %}
