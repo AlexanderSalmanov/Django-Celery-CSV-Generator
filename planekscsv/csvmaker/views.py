@@ -19,9 +19,18 @@ class SchemaList(generic.ListView):
     template_name = 'csvmaker/list.html'
     context_object_name = 'schemas'
 
+    def get_queryset(self):
+        return Schema.objects.filter(author=self.request.user)
 
 
 def new_column(request):
+    """
+    View for creating columns associated to schemas. AJAX-ifyed to prevent the
+    page from refreshing every time the new column is created.
+    To store all columns created during the schema form usage, we look for the session variable,
+    and if it's not present, then we default it to be an empty list. After creating the column,
+    we append its id to the session variable.
+    """
     request.session['col_ids'] = request.session.get('col_ids', [])
     form = ColumnForm(request.POST or None)
     if form.is_valid():
@@ -32,6 +41,15 @@ def new_column(request):
 
 
 def new_schema(request):
+    """
+    View for creating schemas and columns related to it.
+    The trickiest part of this view is associating multiple columns to one schema
+    without refreshing the form page. To implement this, every single column is created
+    via separate view, which, upon submitting, redirects the user back to the form page.
+    All columm ids are stored in a session variable. This variable gets deleted after
+    the scheme is created so that previous column entries are not included to the
+    new schema object.
+    """
     schema_form = SchemaForm(request.POST or None)
     column_form = ColumnForm(request.POST or None)
 
@@ -40,7 +58,7 @@ def new_schema(request):
         schema_obj = schema_form.save(commit=False)
         schema_obj.author = request.user
         schema_obj.save()
-        
+
         created_columns = Column.objects.filter(id__in=request.session['col_ids'])
 
         for item in created_columns:
@@ -59,6 +77,10 @@ def new_schema(request):
 
 
 def delete_schema(request, id):
+    """
+    Simple redirect view for deleting schemas. Works instantly with no conformations
+    thanks to ajax-ifying the view.
+    """
     schema_obj = get_object_or_404(Schema, id=id)
     schema_obj.delete()
     return redirect('csvmaker:all')
@@ -66,11 +88,13 @@ def delete_schema(request, id):
 
 
 def single_schema_datasets(request, id):
+    """
+    Simple view which shows all datasets related to each specific schema.
+    Combination of schema_detail-type view and dataset_list-type view.
+    """
     schema_obj = get_object_or_404(Schema, id=id)
     datasets = schema_obj.all_datasets
-    # for i in datasets:
-    #     if i.status != 'none':
-    #
+
     context = {
         'schema': schema_obj,
         'datasets': datasets
@@ -80,6 +104,16 @@ def single_schema_datasets(request, id):
 
 
 def generate_dataset(request, id):
+    """
+    View implementing csv-file generate feature.
+    The most important parts are:
+        CREATING THE DATASET_OBJ IN THE VIEW,
+        AND RETRIEVING IT IN THE TASK! This detail
+        prevents generating redundant dataset objects.
+        Initiate the task and assign it to a variable.
+        Then assigning the value of task.task_id to a specific dataset_obj
+        to enable progress bars on every single dataset object.
+    """
     schema_obj = get_object_or_404(Schema, id=id)
 
     num_rows = request.POST.get('num_rows', None)
@@ -96,6 +130,10 @@ def generate_dataset(request, id):
 
 
 def download_dataset(request, id):
+    """
+    Default view enabling file download feature.
+    Retrivies file path related to specific dataset, and then downloading the file with corresponding file path.
+    """
     dataset_obj = get_object_or_404(Dataset, id=id)
     file_path = dataset_obj.path_to_file
     if os.path.exists(file_path):

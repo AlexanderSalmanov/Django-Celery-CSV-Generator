@@ -24,32 +24,7 @@
 
   <h3 class='mt-4'>Schema Colums</h3>
   <hr>
-  <!-- <form class="column-form" action="{% url 'csvmaker:new_col' %}" method="post">
-    {% csrf_token %}
-  <div class="row">
-    <div class="col-3">
-      <label for="name" class='form-label'>Column Name</label>
-      <input class='form-control' type="text" name="name" value="" required placeholder='Name'>
-    </div>
-    <div class="col-3">
-      <label for="type" class='form-label'>Type</label>
-      <select class="form-select" name="type" reqiured>
-        {% for type in types %}
-          <option value="{{type}}">{{type}}</option>
-        {% endfor %}
-      </select>
-    </div>
-    <div class="col-3 range-box">
 
-    </div>
-    <div class="col-3">
-      <label for="order" class='form-label'>Order</label>
-      <input class='form-control' type="number" name="order" min='0' required placeholder="0">
-    </div>
-  </div>
-  <button type="submit" class='btn btn-primary mt-2'>Add column</button>
-
-  </form> -->
   {% include 'csvmaker/snippets/column_form.html' with form=column_form %}
 
 {% endblock %}

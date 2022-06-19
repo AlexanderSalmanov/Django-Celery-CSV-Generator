@@ -22,7 +22,7 @@ def generate_dataset(self, schema_id, num_rows):
     iterations = int(num_rows) #explicitly cast form input value into an integer
     schema = Schema.objects.get(id=schema_id) # retrieve schema object
     logger.info(f'Generated schema csv file with {num_rows} rows') # log info to celery terminal window
-    dataset = Dataset.objects.get(schema=schema, status='processing', num_rows=num_rows) # creating dataset object associated to current schema object
+    dataset = Dataset.objects.get(schema=schema, status='processing', num_rows=num_rows) # getting dataset object associated to current schema object
     fakegen = Faker()
     columns = schema.columns.all().order_by('order') # getting all columns related to current schema and sort them by 'order' attribute
 
@@ -40,17 +40,17 @@ def generate_dataset(self, schema_id, num_rows):
 
     filepath = f'csvmaker/generated_files/{filename}'
     with open(f'{filepath}', 'w', newline='') as f:
-        dataset.status = 'processing'
+        dataset.status = 'processing' # modifying dataset status
         dataset.save()
         csv_writer = writer(f)
         csv_writer.writerow([i.title for i in columns]) #Writing column headers
         for i in range(iterations):
             csv_writer.writerow([type_lookup.get(i.type)() for i in columns if i.type in list(type_lookup.keys())]) #Writing column data
-            progress_recorder.set_progress(i + 1, iterations, description=f'On {i+1} row...')
+            progress_recorder.set_progress(i + 1, iterations, description=f'On {i+1} row...') #setting progress on progress_recorder object
 
-        dataset.path_to_file = filepath
+        dataset.path_to_file = filepath # assigning important file IO values to dataset object
         dataset.filename = filename
-        dataset.status = 'ready'
+        dataset.status = 'ready' # finally, setting dataset.status to 'ready' meaning all manipulations with it are done
         dataset.save()
         # cache.set(self.request.id, dataset.id)
         # print(cache)
